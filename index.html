@@ -1289,7 +1289,7 @@ const tPave=toTex(cPave);
 const cMod=makeCanvas(256,256),cModE=makeCanvas(256,256);{ const g=cMod.getContext('2d'),e=cModE.getContext('2d'); g.fillStyle='#cfc8bb'; g.fillRect(0,0,256,256); speckle(g,256,256,1500,.06); e.fillStyle='#000'; e.fillRect(0,0,256,256);
   for(let y=24;y<256;y+=64) for(let x=12;x<256;x+=62){ g.fillStyle='#3d4a54'; g.fillRect(x,y,46,34); g.fillStyle='rgba(255,255,255,.15)'; g.fillRect(x,y,46,6); if(rnd()<.6){ e.fillStyle='#ffe2b8'; e.fillRect(x,y,46,34); } } }
 const tMod=toTex(cMod), tModE=toTex(cModE);
-/* 描き起こしの質感画像（assets/tex_inuyama.webp: 白漆喰・下見板・本瓦・野面積み・床板・天井板・連子窓・町家）を読み込んだら差し替える */
+/* 描き起こしの質感画像（シリーズ共通素材 /oshiro/common/assets/tex/sheet_inuyama.webp: 白漆喰・下見板・本瓦・野面積み・床板・天井板・連子窓・町家）を読み込んだら差し替える */
 { const im=new Image(); im.onload=()=>{ ART=im; const P=ARTP;
     const sq=(c,i,y0,h)=>{ const p=P(i),g=c.getContext('2d'); g.drawImage(im,p[0],p[1]+(y0||0)*p[3],p[2],(h||.5)*p[3],0,0,c.width,c.height); };
     sq(cPlaster,0,0,.5); sq(cShitami,1,0,.5); sq(cRoof,2,0,.8); sq(cStone,3,0,.5); sq(cFloor,4,0,.5);
@@ -1298,7 +1298,7 @@ const tMod=toTex(cMod), tModE=toTex(cModE);
     { const g=cMachi.getContext('2d'),p=P(7); g.drawImage(im,p[0],p[1]+p[3]*.25,p[2],p[3]*.75,0,0,512,512); const e=cMachiE.getContext('2d'); e.fillStyle='#000'; e.fillRect(0,0,512,512); e.fillStyle='#ffcf8a'; e.fillRect(20,300,270,170); e.fillRect(140,110,240,80); }
     { const p=P(6); cWinIn.getContext('2d').drawImage(im,...p,0,0,256,256); const e=cWinInE.getContext('2d'); e.drawImage(im,...p,0,0,256,256); }
     for(const t of [tPlaster,tShitami,tRoof,tStone,tFloor,tKeep1,tKeep2,tKeep4,tKeepN1,tKeepN2,tInK,tMachi,tMachiE,tWinIn,tWinInE]) t.needsUpdate=true; };
-  im.src='assets/tex_inuyama.webp'; }
+  im.src='/oshiro/common/assets/tex/sheet_inuyama.webp'; }
 
 /* ---------- materials ---------- */
 const std=o=>new THREE.MeshStandardMaterial(o);
@@ -1350,7 +1350,7 @@ for(const [k,c,sc] of [['roof',cRoof,1.1],['stone',cStoneH,2.2],['plaster',cPlas
 /* 室内の画像（襖・障子・畳・格天井） */
 const TILE_TEX=[]; for(const n in TILE_META.t){ const c=makeCanvas(256,256),g=c.getContext('2d'); g.fillStyle='#6b5a3e'; g.fillRect(0,0,256,256); const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=4;
   TILE_TEX.push([n,c,t]); M['tl_'+n]=std({map:t,roughness:.8,side:DS}); }
-{ const im=new Image(); im.onload=()=>{ for(const [n,c,t] of TILE_TEX){ const m=TILE_META.t[n]; c.getContext('2d').drawImage(im,m[0],m[1],TILE_META.C,TILE_META.C,0,0,256,256); t.needsUpdate=true; } }; im.src='assets/tiles.webp'; }
+{ const im=new Image(); im.onload=()=>{ for(const [n,c,t] of TILE_TEX){ const m=TILE_META.t[n]; c.getContext('2d').drawImage(im,m[0],m[1],TILE_META.C,TILE_META.C,0,0,256,256); t.needsUpdate=true; } }; im.src='/oshiro/common/assets/tiles.webp'; }
 
 /* ---------- groups ---------- */
 const GS=new THREE.Group(), GM=new THREE.Group(), GE=new THREE.Group(); scene.add(GS,GM,GE); GE.visible=false;
@@ -2095,7 +2095,7 @@ function updateBoats(dt,clock){ const night=TIMES[timeIdx].night>.5;
 const ukaiLight=new THREE.PointLight(0xff9a40,0,60,2); GM.add(ukaiLight);
 
 /* ================= 切り抜き画像（スプライト）: 人物・道具をアトラス画像から並べる ================= */
-const ATL={tex:[]}; { const tl=new THREE.TextureLoader(); for(let i=0;i<ATLAS_META.pages;i++){ const t=tl.load('assets/atlas'+i+'.webp'); t.encoding=THREE.sRGBEncoding; t.anisotropy=4; ATL.tex.push(t); } }
+const ATL={tex:[]}; { const tl=new THREE.TextureLoader(); for(let i=0;i<ATLAS_META.pages;i++){ const t=tl.load(i<4?'/oshiro/common/assets/atlas'+i+'.webp':'/oshiro/common/assets/deco_inuyama.webp'); t.encoding=THREE.sRGBEncoding; t.anisotropy=4; ATL.tex.push(t); } }
 function sprInfo(n){ const m=ATLAS_META.s[n]; if(!m) return null; const P=ATLAS_META.size; return {page:m[0],u:m[1]/P,v:1-(m[2]+m[4])/P,uw:m[3]/P,vh:m[4]/P,h:m[5],aspect:m[3]/m[4]}; }
 const _sprMats=[];
 function sprMaterial(page){ const m=new THREE.MeshBasicMaterial({map:ATL.tex[page],alphaTest:.5,side:THREE.DoubleSide,toneMapped:false}); _sprMats.push(m);
