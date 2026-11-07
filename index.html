@@ -1721,7 +1721,9 @@ const FL=[]; const STAIRS=[]; const KR=(x0,z0,x1,z1)=>({x0:KX+x0,z0:KZ+z0,x1:KX+
   /* 階段の吹き抜け（お城さんぽ共通仕様）: 床の穴を段梯子より左右と後ろに広くあけ、上の階には手すりを回す。
      下から見上げたとき上の階が見え、行き先が塞がって見えないようにする */
   const WELL=.5,WELL_B=.6;
-  const wellOf=S=>{ const f=footprint(S,-WELL_B/Math.hypot(S.b[0]-S.a[0],S.b[1]-S.a[1]),1),along=Math.abs(S.b[0]-S.a[0])>Math.abs(S.b[1]-S.a[1]); return along?{x0:f.x0,x1:f.x1,z0:f.z0-WELL,z1:f.z1+WELL}:{x0:f.x0-WELL,x1:f.x1+WELL,z0:f.z0,z1:f.z1}; };
+  const wellOf=S=>{ const f=footprint(S,-WELL_B/Math.hypot(S.b[0]-S.a[0],S.b[1]-S.a[1]),1),along=Math.abs(S.b[0]-S.a[0])>Math.abs(S.b[1]-S.a[1]); const r=along?{x0:f.x0,x1:f.x1,z0:f.z0-WELL,z1:f.z1+WELL}:{x0:f.x0-WELL,x1:f.x1+WELL,z0:f.z0,z1:f.z1};
+    /* 上の階の壁より外に出ないように収める（外に出ると下の屋根の瓦が見えてしまう） */ const U=FL[S.lo+1],g=footprint(S,0,1); if(U&&U.rects&&U.rects.length){ let a=1e9,b=-1e9,c=1e9,e=-1e9; for(const q of U.rects){ a=Math.min(a,q.x0); b=Math.max(b,q.x1); c=Math.min(c,q.z0); e=Math.max(e,q.z1); }
+      r.x0=Math.min(g.x0,Math.max(r.x0,a+.15)); r.x1=Math.max(g.x1,Math.min(r.x1,b-.15)); r.z0=Math.min(g.z0,Math.max(r.z0,c+.15)); r.z1=Math.max(g.z1,Math.min(r.z1,e-.15)); } return r; };
   const holeOf=hi=>SD.filter(S=>S.lo+1===hi).map(wellOf);
   /* 床・天井の板（穴をよけて四角に分ける） */
   const slab=(par,mat,x0,x1,z0,z1,yTop,th,holes,tu)=>{ const xs=[x0,x1],zs=[z0,z1]; for(const h of holes){ if(h.x1<=x0||h.x0>=x1||h.z1<=z0||h.z0>=z1) continue; xs.push(clamp(h.x0,x0,x1),clamp(h.x1,x0,x1)); zs.push(clamp(h.z0,z0,z1),clamp(h.z1,z0,z1)); }
@@ -1820,7 +1822,9 @@ const FL=[]; const STAIRS=[]; const KR=(x0,z0,x1,z1)=>({x0:KX+x0,z0:KZ+z0,x1:KX+
         FL[lo+1].boxes.push(KR(ax==='z'?a0:c-.12,ax==='z'?c-.12:a0,ax==='z'?a1:c+.12,ax==='z'?c+.12:a1));
         addG(P,M.beam,new THREE.BoxGeometry(ax==='z'?L2:.1,.1,ax==='z'?.1:L2),TM(X,yy+.9,Z),true); addG(P,M.beam,new THREE.BoxGeometry(ax==='z'?L2:.08,.08,ax==='z'?.08:L2),TM(X,yy+.45,Z),true);
         for(const q of [a0,m,a1]) addG(P,M.beam,new THREE.BoxGeometry(.11,.95,.11),TM(ax==='z'?q:c,yy+.47,ax==='z'?c:q),true); }
-      for(const [x0,x1,z0,z1] of [[r.x0,hh.x0,r.z0,r.z1],[hh.x1,r.x1,r.z0,r.z1],[r.x0,r.x1,r.z0,hh.z0],[r.x0,r.x1,hh.z1,r.z1]]) if(x1-x0>.05&&z1-z0>.05) FL[lo+1].boxes.push(KR(x0,z0,x1,z1)); }
+      /* 当たりは左右と後ろ（上がってくる側＝降り口はあけておく） */
+      const strips=along?[[r.x0,r.x1,r.z0,hh.z0],[r.x0,r.x1,hh.z1,r.z1],dx>0?[r.x0,hh.x0,r.z0,r.z1]:[hh.x1,r.x1,r.z0,r.z1]]:[[r.x0,hh.x0,r.z0,r.z1],[hh.x1,r.x1,r.z0,r.z1],dz>0?[r.x0,r.x1,r.z0,hh.z0]:[r.x0,r.x1,hh.z1,r.z1]];
+      for(const [x0,x1,z0,z1] of strips) if(x1-x0>.05&&z1-z0>.05) FL[lo+1].boxes.push(KR(x0,z0,x1,z1)); }
     STAIRS.push({lo,hi:lo+1,a:[KX+S.a[0],KZ+S.a[1]],b:[KX+S.b[0],KZ+S.b[1]],ux:dx/L,uz:dz/L,L,w,y0,y1}); }
 }
 const KEEP_BOX=KR(-K.W1/2-1.5,-K.D1/2-1.5,K.W1/2+1.5,K.D1/2+1.5);
