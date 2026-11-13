@@ -209,6 +209,7 @@ body.touchui #poi{bottom:calc(env(safe-area-inset-bottom,0px) + 234px);max-width
 <div id="err" hidden>この端末では3D表示を開始できませんでした。<br>WebGLに対応したブラウザで開いてください。</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/oshiro/common/edo_deco.js"></script>
 <script>/* three.js r128 examples (MIT): postprocessing */
 ( function () {
 
@@ -2132,7 +2133,10 @@ class Crowd{ constructor(par,max,shadows){ this.par=par; this.max=max||400; this
     const it={p,i,si,x,y,z,w,h,name,flip:!!o.flip}; this.items.push(it); return it; }
   move(it,x,y,z,flip){ it.x=x; it.y=y; it.z=z; it.p.A.pos.setXYZ(it.i,x,y,z); it.p.A.pos.needsUpdate=true; if(flip!==undefined&&flip!==it.flip){ it.flip=flip; it.p.A.size.setX(it.i,flip?-it.w:it.w); it.p.A.size.needsUpdate=true; }
     if(it.si>=0){ this.sh.setMatrixAt(it.si,TM(x,y+.03,z,0,Math.max(.6,it.w*.7),1,Math.max(.45,it.w*.45))); this.sh.instanceMatrix.needsUpdate=true; } } }
-function sprTint(v){ for(const m of _sprMats) m.color.setScalar(v); }
+function sprTint(v){ for(const m of _sprMats) m.color.setScalar(v); if(EDO) EDO.tint(v); }
+/* お城さんぽ共通の江戸の調度品・具足・欄間（/oshiro/common/edo_deco.js と deco_edo.webp）。アトラスにない名前（gk_… rm_… i_…）はこちらで置く */
+const EDO=window.EdoDeco?EdoDeco.init(THREE):null;
+function edoPut(par,name,x,y,z,o){ if(!EDO||!EDO.size(name)) return null; const ms=EDO.put(par,name,x,y,z,o); if(!ms) return null; const u=ms.userData.edo; return {x,y,z,w:u.w,h:u.h,name,mesh:ms}; }
 
 /* ================= 江戸時代の人々 ================= */
 const TALK=[];
@@ -2251,7 +2255,7 @@ function mkRoom(o){ const i=ROOMS.length,ox=-2000+i*70,oz=2600,y=-300,R=Object.a
   /* 出口（南の壁の中央）: 明るい戸口 */ addG(G,M.winIn,new THREE.PlaneGeometry(1.8,2.3),TM(ox,y+1.15,oz+D/2-.03,Math.PI),true);
   R.exitZone={x0:ox-1.1,x1:ox+1.1,z0:oz+D/2-.9,z1:oz+D/2+.5}; R.spawn=[ox,oz+D/2-1.6,0];
   ROOMS.push(R); return R; }
-function rp(R,spr,x,y,z,o,solid,talk){ const it=decoRoom.add(spr,R.ox+x,R.y+y,R.oz+z,o); if(it&&solid){ const w=Math.max(.45,it.w*.4); R.boxes.push({x0:R.ox+x-w,x1:R.ox+x+w,z0:R.oz+z-.45,z1:R.oz+z+.45}); } if(it&&talk) TALK.push({it,name:talk[0],say:talk[1],era:R.era,room:R}); return it; }
+function rp(R,spr,x,y,z,o,solid,talk){ const it=decoRoom.add(spr,R.ox+x,R.y+y,R.oz+z,o)||edoPut(GR,spr,R.ox+x,R.y+y,R.oz+z,o); if(it&&solid){ const w=Math.max(.45,it.w*.4); R.boxes.push({x0:R.ox+x-w,x1:R.ox+x+w,z0:R.oz+z-.45,z1:R.oz+z+.45}); } if(it&&talk) TALK.push({it,name:talk[0],say:talk[1],era:R.era,room:R}); return it; }
 function rbox(R,mat,x,y,z,w,h,d,solid){ addG(R.G,mat,boxUV(w,h,d,1.5,1.5),TM(R.ox+x,R.y+y+h/2,R.oz+z),true); if(solid) R.boxes.push({x0:R.ox+x-w/2-.2,x1:R.ox+x+w/2+.2,z0:R.oz+z-d/2-.2,z1:R.oz+z+d/2+.2}); }
 function rwall(R,mat,x,z,w,h,ry){ addG(R.G,mat,new THREE.PlaneGeometry(w,h),TM(R.ox+x,R.y+h/2+.02,R.oz+z,ry),true); }
 /* 江戸: 松の丸御殿の書院 */
@@ -2262,7 +2266,10 @@ function rwall(R,mat,x,z,w,h,ry){ addG(R.G,mat,new THREE.PlaneGeometry(w,h),TM(R
   rp(R,'lacq_table',0,0,-2.4,{},true); rp(R,'katana_rack',1.5,0,-3.7); rp(R,'vase',5.6,0,-4.7,{},true); rp(R,'kabuto_box',-6.1,0,-3.6,{},true);
   rp(R,'lord_navy',0,.02,-3.2,{},true,['城主・成瀬隼人正','よう参った。成瀬家は尾張の徳川さまの付家老として、この犬山を預かっておる。']);
   rp(R,'sam_haori',-3.2,0,0,{},true,['家老','殿は年の半分は名古屋の御城下にお詰めじゃ。犬山のことは我らがしっかりお守りいたす。']);
-  rp(R,'jijo',3.6,0,-.6,{flip:true},true,['御殿の侍女','お茶をお持ちいたしました。']); rp(R,'kouro',2.4,.02,-2.6); rp(R,'lantern_dai',-6,0,3.6,{},true); rp(R,'lantern_dai',6,0,3.6,{},true); }
+  rp(R,'jijo',3.6,0,-.6,{flip:true},true,['御殿の侍女','お茶をお持ちいたしました。']); rp(R,'kouro',2.4,.02,-2.6); rp(R,'lantern_dai',-6,0,3.6,{},true); rp(R,'lantern_dai',6,0,3.6,{},true);
+  /* お城さんぽ共通の欄間と具足: 犬山は古い木造らしい簡素な造りなので、素木の欄間と成瀬家の具足だけ */
+  [[-.9,'rm_shiraki_matsu'],[2.5,'rm_shiraki_hanabishi'],[5.6,'rm_shiraki_ogi']].forEach(([x,n])=>rp(R,n,x,2.7,-5.42,{yaw:0,h:.58}));
+  rp(R,'gk_toko5',6,0,-2.6,{},true,['飾り具足','成瀬家の具足。成瀬家は尾張徳川家の付家老として犬山城を預かりました。']); }
 /* 江戸: 本町の呉服屋（町家の中） */
 { const D=EDO_DOOR.gofuku,R=mkRoom({name:'本町の呉服屋（町家）',era:'edo',w:7,d:14,h:3,door:D,exitPos:[D.x+2,D.z,-Math.PI/2],light:.8,floor:M.tatami,wall:M.inWall});
   rbox(R,M.dirt,-2.4,0,0,2.2,.06,13.4); /* 通り土間 */ for(let z=-5;z<=4;z+=3) rp(R,'shelf',3.1,0,z,{yaw:-Math.PI/2}); rp(R,'chest',3,0,5.4,{yaw:-Math.PI/2}); rp(R,'box_l',1.6,0,-2,{});
@@ -2286,7 +2293,7 @@ function rwall(R,mat,x,z,w,h,ry){ addG(R.G,mat,new THREE.PlaneGeometry(w,h),TM(R
 /* 現代: 城とまちミュージアム */
 { const D=MOD_DOOR.museum,R=mkRoom({name:'城とまちミュージアム',era:'modern',w:16,d:12,h:3.6,door:D,exitPos:[D.x,D.z+2,Math.PI],light:.85,floor:M.floor,wall:M.white,wallTu:3});
   for(const [x,z] of [[-4,-2],[0,-2],[4,-2]]){ rbox(R,M.darkwood,x,0,z,2.4,.9,1.4,true); addG(R.G,M.glass,new THREE.BoxGeometry(2.3,1,1.3),TM(R.ox+x,R.y+1.4,R.oz+z),true); }
-  rp(R,'ex_kabuto1',-4,.9,-2); rp(R,'karakuri',0,.9,-2,{s:.9}); rp(R,'ex_chawan_oribe',4,.9,-2); rp(R,'ex_byobu_castle2',-7.6,0,1,{yaw:Math.PI/2}); rp(R,'ex_kakejiku_castle',0,.4,-5.9,{yaw:0}); rp(R,'armor',7.5,0,1,{yaw:-Math.PI/2});
+  rp(R,'ex_kabuto1',-4,.9,-2); rp(R,'karakuri',0,.9,-2,{s:.9}); rp(R,'ex_chawan_oribe',4,.9,-2); rp(R,'ex_byobu_castle2',-7.6,0,1,{yaw:Math.PI/2}); rp(R,'ex_kakejiku_castle',0,.4,-5.9,{yaw:0}); rp(R,'armor',7.5,0,1,{yaw:-Math.PI/2}); rp(R,'gk_buke3',7.2,0,-3.6,{},true,['展示：当世具足','江戸時代の武士の具足（展示）。胴・袖・草摺を小札でつづり、兜に前立を付けます。']);
   rbox(R,M.darkwood,4.5,0,2.6,1.6,.8,1.4,true); rp(R,'shachi_gold',4.5,.8,2.6,{s:1}); rbox(R,M.darkwood,-4.5,0,2.6,2.2,.8,1.6,true); rp(R,'iy_castle',-4.5,.8,2.6,{s:1.1}); }
 for(const R of ROOMS){ const D=R.door; R.dz={x0:D.x-2.4,x1:D.x+2.4,z0:D.z-2.4,z1:D.z+2.4}; }
 
