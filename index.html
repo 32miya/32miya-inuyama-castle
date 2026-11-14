@@ -2477,8 +2477,8 @@ function mkMap(era){ const c=makeCanvas(MW,MH),g=c.getContext('2d'),ST=3;
 const mapCM=mkMap('modern'),mapCE=mkMap('edo'); let mapC=mapCM;
 $('mapFrame').style.aspectRatio=MW+'/'+MH;
 const miniC=$('miniC'),mini2=miniC.getContext('2d');
-function drawMini(){ const r=miniC.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),S=Math.round(r.width*dpr); if(miniC.width!==S){ miniC.width=miniC.height=S; }
-  const span=150*GSC,px=P.room?P.room.door.x:P.x,pz=P.room?P.room.door.z:P.z,cx=(px-MAPR.x0)*GSC,cz=(pz-MAPR.z0)*GSC; mini2.fillStyle='#3e5a6a'; mini2.fillRect(0,0,S,S); mini2.drawImage(mapC,cx-span/2,cz-span/2,span,span,0,0,S,S);
+function drawMini(){ const r=miniC.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),need=Math.max(2,Math.round(r.width*dpr)); if(miniC.width<need){ miniC.width=miniC.height=need; } const S=miniC.width; /* 画面を回したときに作り直して黒くなるのを防ぐ */
+  const span=150*GSC,px=P.room?P.room.door.x:P.x,pz=P.room?P.room.door.z:P.z,cx=(px-MAPR.x0)*GSC,cz=(pz-MAPR.z0)*GSC; mini2.fillStyle='#3e5a6a'; mini2.fillRect(0,0,S,S); { /* iPhone の Safari は元の絵からはみ出す範囲を切り出すと黒くなることがあるので、はみ出さない範囲だけを描く */ const sx=cx-span/2,sy=cz-span/2,k=S/span,ix0=Math.max(0,sx),iy0=Math.max(0,sy),ix1=Math.min(mapC.width,sx+span),iy1=Math.min(mapC.height,sy+span); if(ix1-ix0>1&&iy1-iy0>1){ try{ mini2.drawImage(mapC,ix0,iy0,ix1-ix0,iy1-iy0,(ix0-sx)*k,(iy0-sy)*k,(ix1-ix0)*k,(iy1-iy0)*k); }catch(e){} } }
   mini2.save(); mini2.translate(S/2,S/2); mini2.rotate(-P.yaw); mini2.fillStyle='#fff'; mini2.strokeStyle='#d2452c'; mini2.lineWidth=2*dpr; mini2.beginPath(); mini2.moveTo(0,-9*dpr); mini2.lineTo(6*dpr,7*dpr); mini2.lineTo(0,3*dpr); mini2.lineTo(-6*dpr,7*dpr); mini2.closePath(); mini2.fill(); mini2.stroke(); mini2.restore(); }
 function drawMap(){ const c=$('mapC'),r=c.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1); c.width=Math.round(r.width*dpr); c.height=Math.round(r.height*dpr);
   c.getContext('2d').drawImage(mapC,0,0,c.width,c.height); const px=P.room?P.room.door.x:P.x,pz=P.room?P.room.door.z:P.z;
