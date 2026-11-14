@@ -2365,6 +2365,9 @@ const SPOTS=[
   {id:'watashi',edoOnly:true,name:'内田の渡し',kana:'うちだ の わたし',at:[-120,-174],pos:[-120,-158],look:[-120,-3,-260],
    text:'木曽川の渡し場。対岸は中山道の宿場・鵜沼宿で、旅人は舟で川を渡って犬山へやって来ました。浮世絵「木曽街道六拾九次」の鵜沼宿の絵にも、川越しに犬山城の天守が描かれています。上流の木曽谷から流してきた筏の材木も、川沿いで陸に揚げられました。',meta:[['対岸','中山道 鵜沼宿'],['見どころ','渡し舟・筏']]}
 ];
+/* お城さんぽ共通（/oshiro/common/fuda.js の見どころ札・写真モード）へ、名所と自分の位置を知らせる窓口 */
+window.OshiroGame={ spots:()=>spotList(), all:()=>SPOTS, me:()=>({x:P.x,z:P.z,level:P.level,room:!!P.room,walk:P.mode==='walk',tour:typeof tour!=='undefined'&&!!tour.on}), started:()=>typeof started==='undefined'||!!started, warpAt:0 };
+{ const _tp=teleport; teleport=function(s){ window.OshiroGame.warpAt=performance.now(); return _tp.apply(this,arguments); }; }
 function spotList(){ return SPOTS.filter(s=>MODE==='edo'?!s.modernOnly:!s.edoOnly).map(s=>MODE==='edo'&&s.edo?Object.assign({},s,s.edo):s); }
 function areaAt(x,z){ const e=MODE==='edo';
   if(inR(KEEP_BOX,x,z,4)) return '天守の前'; for(const T of TER) if(inR(T,x,z,.5)){ if(T.id==='matsu'&&e) return '松の丸（成瀬家の御殿）'; if(T.id==='hari') return e?'三の丸（家臣の屋敷）':'針綱神社'; return T.name; }
@@ -2744,6 +2747,7 @@ window.__iy={P,FL,STAIRS,ROOMS,walkable,canStep,setMode,teleport:id=>{ const s=c
 })();
 </script>
 <script src="/oshiro/common/goshuin.js"></script>
+<script src="/oshiro/common/fuda.js"></script>
 <!-- oshiro-portal:end -->
 <style id="landCSS">
 /* スマホ横向き: 上下が狭いので、札・地図・ボタンを小さく端へまとめる（お城さんぽ共通の横向きの作り） */
