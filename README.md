@@ -20,3 +20,20 @@ URLの末尾に `?era=edo` を付けると江戸時代で開きます。
 - 人物・旗・襖絵・床板・石垣・小物などの素材は、シリーズ共通の `https://32miya.github.io/oshiro/common/assets/` から読み込みます（このリポジトリに同じ画像を置かない）。犬山城で描き起こした小物（`deco_inuyama.webp`）と質感（`tex/sheet_inuyama.webp`）も共通素材に入れ、他の城でも使えるようにしています。一覧と使い方は `32miya/32miya.github.io` の `oshiro/common/README.md`。
 - 天守の窓は本当の開口にして、各階の中から外の景色が見えるようにする（シリーズ共通の作り）。
 - index.html の末尾の `oshiro-portal:begin`〜`end` は「お城選びへ戻る」ボタンなので消さない。
+
+## 戦国・城ディフェンス（仮）試作版 — 合戦モード
+URL の末尾に `?battle` を付けると、このマップで合戦（城を守る軽めのRTS）が遊べます。散策モードには影響しません。
+
+- `?battle` …出陣前の画面から（三すくみ・敵の傾向・我が軍を表示）
+- `?battle&bench` …負荷テスト（味方・敵の部隊数を変えて fps を測る。「自動で測る」で快適な上限を出す）
+- `?battle&hud` …合戦中も fps・描画回数などを表示
+
+ファイル:
+- `battle/sim.js` 合戦の計算（部隊単位。three.js を使わないので node でも動く）
+- `battle/view.js` 表示と操作（軽量版マップ・低ポリゴン兵士のインスタンシング・時間停止の指示・画面）
+- `battle/battle.css` 画面のスタイル
+- `battle/maps/inuyama.js` 犬山城の設定データ（入口・進軍ルート・防衛線・配置場所・敵の波・武将）
+- `battle/tools/balance.js` バランス確認（`node battle/tools/balance.js -v`）
+
+index.html 側の変更は、`?battle` のときだけ働く入口（江戸時代に固定・画質を軽に・人や舟を止める・カメラと影をゲームに任せる・battle/ を読み込む）だけです。
+エンジン（sim.js・view.js・battle.css）は他の城でも共通なので、試作が固まったら `oshiro/common/battle/` に移す想定です。
