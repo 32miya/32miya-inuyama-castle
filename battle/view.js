@@ -290,6 +290,7 @@ function loadSave(){ try{ return JSON.parse(localStorage.getItem(STORE)||'{}'); 
 function saveSave(s){ try{ localStorage.setItem(STORE,JSON.stringify(s)); }catch(e){} }
 function clearUnits(){ for(const ic of UI.icons.values()) ic.remove(); UI.icons.clear(); arrows.length=0; }
 function startBattle(){
+  $('obModal').classList.remove('obTitleM'); Object.assign(CAM,MAP.camera||{});
   clearUnits(); bench=null; sunsetDone=false; IY.applyTime(1); OB.shadowDirty=3;
   B=new SIM.Battle(MAP,{army:MAP.army,h:H});
   buildCards(B); buildLines(); setLines(0); $('obModal').hidden=true; $('obCards').hidden=false; $('obLines').hidden=false; $('obHud').hidden=!QS.has('hud');
@@ -311,8 +312,8 @@ function showBrief(){
   <p class="obMix">${mix}</p><p>${E.trend}。大将 <b>${E.boss.name}</b>（特技「${E.boss.skill.name}」${E.boss.skill.text}）</p>
   <div class="obRps"><span class="k t-yari">槍</span>→<span class="k t-kiba">騎</span>→<span class="k t-yumi">弓</span>→<span class="k t-yari">槍</span><small>矢印の先に強い（有利1.5倍・不利0.6倍）。不利な相手や挟み撃ちで士気が下がり、0になると敗走</small></div>
   <p class="obHow">部隊のアイコン（下の札）をタップすると<b>時間が止まり</b>、指示を出せます。行き先や相手をタップすると再開。まとめて指示するときは右上の ❚❚。赤い点線が敵の進軍ルートです。</p>
-  <div class="obAct"><button class="obBtn obGo" id="obStart">出陣</button><button class="obBtn" id="obBenchBtn">負荷テスト</button><a class="obBtn" href="./">散策へ戻る</a></div></div>`;
-  $('obStart').onclick=startBattle; $('obBenchBtn').onclick=showBenchSetup;
+  <div class="obAct"><button class="obBtn obGo" id="obStart">出陣</button><button class="obBtn" id="obBackSt">城選びへ戻る</button></div></div>`;
+  $('obStart').onclick=startBattle; $('obBackSt').onclick=showStages;
 }
 function showResult(){
   const r=B.result(),cap=SIM.capOf(MAP),nx=SIM.nextArmy(r,cap),win=r.state==='win',lossP=Math.round(nx.lossRate*100);
@@ -325,8 +326,68 @@ function showResult(){
   <table class="obTab"><tr><th>部隊</th><th>合戦前</th><th>残り</th><th>合流</th><th>後詰め</th><th>次</th></tr>${nx.army.map(a=>{ const o=r.army.find(q=>q.id===a.id); return `<tr><td><span class="k t-${a.type}">${T[a.type].short}</span>${a.name}${a.isNew?' <em>新</em>':''}</td><td>${o?o.men0:'-'}</td><td>${a.isNew?'-':a.left}</td><td>${a.join?'+'+a.join:'-'}</td><td>+${a.reinf||0}</td><td><b>${a.menNext}</b></td></tr>`; }).join('')}</table>
   <p class="obNote">${nx.notes.join('<br>')||'損害が2割以下なら、次の城で部隊が1つ増えます'}<br>次の城の部隊の上限は「入口の数＋補正」で決まります。敵の兵数も城ごとに増えます。</p>`:
   `<p class="obNote">本丸までの道は大手と搦手の2つ。三すくみを見て、門で足止めしながら弓で削るのがコツです。</p>`}
-  <div class="obAct"><button class="obBtn obGo" id="obAgain">もう一度</button><button class="obBtn" id="obToBrief">出陣前の画面へ</button><a class="obBtn" href="./">散策へ戻る</a></div></div>`;
-  $('obAgain').onclick=startBattle; $('obToBrief').onclick=()=>{ B=null; clearUnits(); IY.applyTime(1); OB.shadowDirty=3; showBrief(); };
+  <div class="obAct"><button class="obBtn obGo" id="obAgain">もう一度</button><button class="obBtn" id="obToBrief">出陣前の画面へ</button><button class="obBtn" id="obToSt">城選びへ</button></div></div>`;
+  $('obAgain').onclick=startBattle; $('obToBrief').onclick=()=>{ leaveBattle(); showBrief(); }; $('obToSt').onclick=()=>{ leaveBattle(); showStages(); };
+}
+
+/* ================= タイトル・城選び・遊び方（お城さんぽとは別のゲームとしての入口） ================= */
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ステージ（小さい城から順に）。map があるものだけ遊べる。江戸城はクリア後の隠しステージ */
+const STAGES=[
+  {id:'inuyama',name:'犬山城',kana:'いぬやま',pref:'尾張',feat:'木曽川を背にした後堅固の城'},
+  {id:'matsumoto',name:'松本城',kana:'まつもと',pref:'信濃',feat:'堀に囲まれた平城'},
+  {id:'hikone',name:'彦根城',kana:'ひこね',pref:'近江',feat:'天秤櫓と登り石垣'},
+  {id:'matsuyama',name:'松山城',kana:'まつやま',pref:'伊予',feat:'門と櫓が連なる連立式'},
+  {id:'bitchu',name:'備中松山城',kana:'びっちゅうまつやま',pref:'備中',feat:'雲海に浮かぶ山城・急斜面'},
+  {id:'aizu',name:'会津若松城',kana:'あいづわかまつ',pref:'陸奥',feat:'鶴ヶ城・広い外郭'},
+  {id:'himeji',name:'姫路城',kana:'ひめじ',pref:'播磨',feat:'迷路のような門の連なり'},
+  {id:'kumamoto',name:'熊本城',kana:'くまもと',pref:'肥後',feat:'武者返しの石垣'},
+  {id:'azuchi',name:'安土城',kana:'あづち',pref:'近江',feat:'織田信長・鉄砲隊'},
+  {id:'osaka',name:'大坂城',kana:'おおさか',pref:'摂津',feat:'最終決戦・大坂の陣・真田幸村'}
+];
+const EDO={id:'edo',name:'江戸城',kana:'えど',pref:'武蔵',feat:'全城攻略で現れる隠しの城'};
+function leaveBattle(){ B=null; bench=null; clearUnits(); IY.applyTime(1); OB.shadowDirty=3; $('obModal').classList.remove('obTitleM'); }
+function showTitle(){
+  leaveBattle(); Object.assign(CAM,{x:-4,z:-95,dist:215});
+  const sv=loadSave(),done=STAGES.filter(s=>sv[s.id]&&sv[s.id].cleared).length;
+  const M=$('obModal'); M.hidden=false; M.classList.add('obTitleM');
+  M.innerHTML=`<div class="obTitleScr">
+    <div class="obLogo"><small>城を守り抜け</small><h1><span class="l1">戦国</span><span class="l2">城ディフェンス</span></h1><span class="obKari">仮</span></div>
+    <p class="obLead">名城に攻め寄せる大軍を、<br>足軽・弓・騎馬の三すくみで迎え撃つ。<br>小さな城から始め、最後は大坂の陣へ。</p>
+    <div class="obMenu">
+      <button class="obBtn obGo" id="tPlay">合戦をはじめる</button>
+      <button class="obBtn" id="tHow">遊び方</button>
+      <div class="obMenuS"><button class="obBtn" id="tBench">負荷テスト</button><a class="obBtn" href="./">お城さんぽへ</a></div>
+    </div>
+    <p class="obProg">攻略 ${done}／${STAGES.length}城${sv.army?'　・　軍勢 '+sv.army.length+'部隊 '+sv.army.reduce((a,b)=>a+b.men,0)+'人':''}</p>
+  </div>`;
+  $('tPlay').onclick=showStages; $('tHow').onclick=showHowto; $('tBench').onclick=()=>{ M.classList.remove('obTitleM'); showBenchSetup(); };
+}
+function showStages(){
+  const sv=loadSave(),M=$('obModal'); M.hidden=false; M.classList.remove('obTitleM');
+  const maps=window.OshiroBattleMaps||{},all=STAGES.every(s=>sv[s.id]&&sv[s.id].cleared);
+  const row=(s,i,hidden)=>{ const ok=!!maps[s.id],cl=sv[s.id]&&sv[s.id].cleared;
+    return `<li class="${ok?'ok':'lock'}${cl?' cl':''}" ${ok?`data-id="${s.id}"`:''}><span class="no">${hidden?'隠':'第'+'一二三四五六七八九十'[i]+'の城'}</span>
+      <b>${hidden&&!all?'？？？':s.name}</b><small>${hidden&&!all?'すべての城を守り抜くと現れる':s.pref+'・'+s.feat}</small>
+      <em>${cl?'攻略済'+(sv[s.id].bestLoss!==undefined?'<br>損害'+sv[s.id].bestLoss+'%':''):ok?'出陣できる':'準備中'}</em></li>`; };
+  M.innerHTML=`<div class="obSheet obStages"><p class="obEra">城選び</p><h1>守る城を選ぶ</h1>
+    <p class="obSub">小さな城から順に。進むほど難攻不落の城・広い城になり、敵の兵も増えます。</p>
+    <ol class="obStList">${STAGES.map((s,i)=>row(s,i)).join('')}${row(EDO,10,true)}</ol>
+    <div class="obAct"><button class="obBtn" id="stBack">タイトルへ</button></div></div>`;
+  M.querySelectorAll('li[data-id]').forEach(li=>li.onclick=()=>{ if(li.dataset.id===MAP.id) showBrief(); else toast('この城は準備中です','info'); });
+  $('stBack').onclick=showTitle;
+}
+function showHowto(){
+  const M=$('obModal'); M.hidden=false; M.classList.remove('obTitleM');
+  M.innerHTML=`<div class="obSheet"><p class="obEra">遊び方</p><h1>合戦の心得</h1>
+  <h2>勝ち負け</h2><p>決められた時間（日没・援軍の到着など）まで守り抜けば勝ち。<b>本丸に敵が一兵でも入れば落城</b>。敵は3〜4波で攻め寄せ、最後の波に大将が来ます。</p>
+  <h2>指示を出す</h2><p>部隊のアイコン（または下の札）をタップすると<b>時間が止まります</b>。指示を選び、行き先や相手をタップすると再開。右上の ❚❚ で止めると、何部隊にもまとめて指示できます。</p>
+  <ul class="obHowL"><li><b>守備</b>その場や門・櫓・石垣を守る</li><li><b>援軍</b>味方の部隊のもとへ駆けつける</li><li><b>迎撃</b>選んだ敵の部隊を狙う</li><li><b>任せる</b>部隊が自分で判断して戦う</li><li><b>退却</b>ひとつ奥の曲輪へ下がる</li></ul>
+  <h2>三すくみ</h2><div class="obRps"><span class="k t-yari">槍</span>→<span class="k t-kiba">騎</span>→<span class="k t-yumi">弓</span>→<span class="k t-yari">槍</span><small>足軽は騎馬に、騎馬は弓に、弓は足軽に強い。有利なら1.5倍、不利なら0.6倍。</small></div>
+  <h2>士気と地形</h2><p>不利な相手との戦いや挟み撃ちで士気が下がり、0になると<b>敗走</b>。櫓・石垣の上の弓は射程がのび、狭い門では騎馬が弱く、急な坂では足が鈍ります。城ごとの武将の特技も使いましょう。</p>
+  <h2>軍勢の成長</h2><p>レベルはありません。減った兵は次の城へ持ち越し、合戦の前に後詰め（援軍）が加わります。損害が少なければ部隊が増えます。</p>
+  <div class="obAct"><button class="obBtn obGo" id="hwBack">戻る</button></div></div>`;
+  $('hwBack').onclick=showTitle;
 }
 
 /* ================= 負荷テスト（iPhoneで何部隊まで快適に動くか） ================= */
@@ -340,7 +401,7 @@ function showBenchSetup(){
   <p class="obNote">「自動で測る」は、毎秒の描画回数（fps）が下がるまで部隊を少しずつ増やし、快適（45fps以上）と、遊べる（30fps以上）の上限を出します。低電力モードがオンだと30fpsまでしか出ません。</p>
   <div class="obAct"><button class="obBtn obGo" id="bGo">この数で動かす</button><button class="obBtn obGo" id="bAuto">自動で測る</button><button class="obBtn" id="bBack">戻る</button></div></div>`;
   for(const [i,v,k] of [['biA','bvA','ally'],['biE','bvE','enemy'],['biM','bvM','men']]) $(i).oninput=e=>{ BEN[k]=+e.target.value; $(v).textContent=BEN[k]; };
-  $('bGo').onclick=()=>startBench(false); $('bAuto').onclick=()=>startBench(true); $('bBack').onclick=showBrief;
+  $('bGo').onclick=()=>startBench(false); $('bAuto').onclick=()=>startBench(true); $('bBack').onclick=showTitle;
 }
 function startBench(auto){
   clearUnits(); IY.applyTime(1); OB.shadowDirty=3;
@@ -349,7 +410,7 @@ function startBench(auto){
   $('obModal').hidden=true; $('obCards').hidden=true; $('obLines').hidden=true; $('obHud').hidden=false; $('obWave').textContent='負荷テスト';
   const H2=$('obHud'); H2.innerHTML='<pre id="obHudT"></pre><div class="obAct"><button class="obBtn" id="bFig">兵士の表示 ON</button><button class="obBtn" id="bEnd">終わる</button></div>';
   $('bFig').onclick=()=>{ showFigs=!showFigs; $('bFig').textContent='兵士の表示 '+(showFigs?'ON':'OFF'); };
-  $('bEnd').onclick=()=>{ bench=null; B=null; clearUnits(); showFigs=true; $('obHud').hidden=true; showBenchSetup(); };
+  $('bEnd').onclick=()=>{ bench=null; leaveBattle(); showFigs=true; $('obHud').hidden=true; showBenchSetup(); };
 }
 function benchKeep(dt){
   const A=B.live('ally'),E=B.live('enemy'),types=['yari','yumi','kiba'];
@@ -391,6 +452,8 @@ function frame(dt,now){
   simMs=simMs*.9+(performance.now()-t0)*.1;
   /* 動いている間は perf.js の「止まっている」判定（毎秒20回に落とす）を起こさない */
   if(B&&!paused()&&(pingT-=dt)<=0){ pingT=.4; try{ dispatchEvent(new Event('wheel')); }catch(e){} }
+  if(!B&&!reduceMotion){ CAM.yaw+=dt*.045; }
+  root.classList.toggle('inMenu',!B);
   placeCamera(dt);
   const alpha=B?Math.min(1,B.acc/B.C.tick):1;
   if(B){ drawSoldiers(B,paused()?1:alpha,clock); drawArrows(paused()?0:dt*UI.speed); }
@@ -411,6 +474,7 @@ function after(dt){
 lighten(); makeSoldiers(); drawRoutes(); buildMarks(); buildLines();
 document.documentElement.classList.add('obready');
 OB.ready=true;
-if(QS.has('bench')) showBenchSetup(); else showBrief();
+document.title='戦国・城ディフェンス（仮）';
+if(QS.has('bench')) showBenchSetup(); else if(QS.get('stage')===MAP.id) showBrief(); else showTitle();
 OB.debug={get B(){ return B; },UI,CAM,startBattle,startBench,BEN,get bench(){ return bench; },fpsOf,get figTotal(){ return figTotal; }};
 })();
