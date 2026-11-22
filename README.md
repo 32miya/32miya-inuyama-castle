@@ -20,3 +20,7 @@ URLの末尾に `?era=edo` を付けると江戸時代で開きます。
 - 人物・旗・襖絵・床板・石垣・小物などの素材は、シリーズ共通の `https://32miya.github.io/oshiro/common/assets/` から読み込みます（このリポジトリに同じ画像を置かない）。犬山城で描き起こした小物（`deco_inuyama.webp`）と質感（`tex/sheet_inuyama.webp`）も共通素材に入れ、他の城でも使えるようにしています。一覧と使い方は `32miya/32miya.github.io` の `oshiro/common/README.md`。
 - 天守の窓は本当の開口にして、各階の中から外の景色が見えるようにする（シリーズ共通の作り）。
 - index.html の末尾の `oshiro-portal:begin`〜`end` は「お城選びへ戻る」ボタンなので消さない。
+
+## 戦国・城ディフェンス（仮）の合戦モード
+URL の末尾に `?battle` を付けると、このマップを使って「戦国・城ディフェンス」の犬山城ステージが動きます（散策モードには影響しません）。
+ゲーム本体（タイトル・城選び・合戦の計算・表示・この城の設定データ）は別リポジトリ [32miya/defence-castle](https://github.com/32miya/defence-castle) にあり、ここでは index.html の入口（数行）だけを持っています。
