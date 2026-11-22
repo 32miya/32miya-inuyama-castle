@@ -138,8 +138,8 @@ body.touchui #poi{bottom:calc(env(safe-area-inset-bottom,0px) + 234px);max-width
 #err{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;line-height:1.8;z-index:40;background:var(--sumi)}
 @media (min-width:760px){ .place .area{font-size:26px} #mini{width:132px;height:132px} }
 </style>
-<script>/* 戦国・城ディフェンス（合戦モード）: URLに ?battle を付けたときだけ。散策には影響しない */
-if(/[?&]battle\b/.test(location.search)){ document.documentElement.classList.add('obattle'); var l=document.createElement('link'); l.rel='stylesheet'; l.href='battle/battle.css'; document.head.appendChild(l); }</script>
+<script>/* 戦国・城ディフェンス（合戦モード・別リポジトリ defence-castle）: URLに ?battle を付けたときだけ。散策には影響しない */
+if(/[?&]battle\b/.test(location.search)){ document.documentElement.classList.add('obattle'); var l=document.createElement('link'); l.rel='stylesheet'; l.href='/defence-castle/battle/battle.css'; document.head.appendChild(l); }</script>
 </head>
 <body>
 
@@ -2731,7 +2731,8 @@ requestAnimationFrame(frame);
 window.__iy={P,FL,STAIRS,ROOMS,walkable,canStep,setMode,teleport:id=>{ const s=curSpots.find(q=>q.id===id); if(s) teleport(s); },spots:()=>curSpots,start:()=>$('goBtn').click(),sim:(n,dt,k)=>{ Object.assign(keys,k||{}); for(let i=0;i<n;i++) updatePlayer(dt||.05); for(const q in k||{}) keys[q]=false; },enterKeep,doStair,enterRoom,applyTime,get MODE(){ return MODE; },renderer,scene,M,
   camera,groundH0,terrH,TERR,RAMPS,GS,GM,GE,GNPC,sun,hemi,waterMat,TIMES,KX,KZ,get timeIdx(){ return timeIdx; },setQuality:q=>{ if((q==='high')!==(quality==='high')) $('tQual').click(); },BATTLE};
 /* 合戦モード: 江戸時代のマップで、battle/ のゲームを読み込む */
-if(BATTLE){ setMode('edo'); for(const src of ['battle/sim.js','battle/maps/inuyama.js','battle/view.js']){ const sc=document.createElement('script'); sc.src=src; sc.async=false; document.body.appendChild(sc); } }
+/* ゲーム本体は別リポジトリ（32miya/defence-castle）。この城のマップ設定は battle/maps/inuyama.js */
+if(BATTLE){ setMode('edo'); window.OB_MAP='inuyama'; window.OB_GAME_URL='/defence-castle/'; for(const src of ['/defence-castle/battle/sim.js','/defence-castle/battle/maps/inuyama.js','/defence-castle/battle/view.js']){ const sc=document.createElement('script'); sc.src=src; sc.async=false; document.body.appendChild(sc); } }
 })();
 </script>
 <!-- oshiro-portal:begin（お城さんぽ入口へ戻るボタン・各城共通。このブロックごと </body> の直前に貼る） -->
